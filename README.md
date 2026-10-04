@@ -13,9 +13,12 @@ transport-level compatibility patches (`server/webflix-lab/COMPAT_PATCHES.md`).
 
 ## Live
 
-Deployed on Vercel from this repository (git integration: push to `main` →
-production deploy). The production URL is recorded below after the first
-successful deploy.
+**https://webflix-studio-mu.vercel.app** — production deployment (Vercel team
+`tepa`, project `webflix-studio`), verified end-to-end in the browser:
+compile (24 turns, deterministic artifact `audio-overview-1e34b2a7aba5`) →
+listen (CDN-served byte-identical master WAV) → join → boundary 4 → typed ask
+→ locality 24/24 byte-identity + F1 grounding PASS → session master streams
+(329 s = 307.59 + 21.18 s exact).
 
 ## What you can do in the browser
 
@@ -67,16 +70,28 @@ commit or if any patch pattern stops matching.
 
 ## Deployment
 
+Two paths (this repository's directory is linked to the live `tepa` project):
+
 ```bash
-bunx vercel deploy --prod --token "$VERCEL_TOKEN"
+# the live path (tepa scope — this is how the production deploy was made):
+bunx vercel deploy --prod --scope tepa --token "$VERCEL_TOKEN"
+
+# the git path (default-team project, git-linked to this repository):
+# push to main → auto-deploy, ONCE the repo is added to the Vercel GitHub
+# App's repository list on payswapdotorg (GitHub → Settings → Applications →
+# Vercel → Configure → Repository access). A deploy hook (`ops-deploy`) is
+# armed on that project as an alternative trigger.
 ```
 
 - Framework: Next.js (App Router). One dynamic route serves the entire studio
   surface; statics are CDN-served from `public/`.
-- Function config: `maxDuration = 60` (the Deep-Dive 300 s compile takes ~5 s
-  of CPU), Node runtime, `force-dynamic` (the studio surface is no-store).
+- Function config: `maxDuration = 60` (the Deep-Dive 300 s compile takes
+  ~5–9 s of CPU locally/serverless), Node runtime, `force-dynamic` (the studio
+  surface is no-store).
 - Multi-MB WAV responses (> 4 MB) stream instead of buffering (serverless
   response cap) — transport-only; bytes unchanged.
+- Environment secrets on the live project are Production-scoped
+  (`DATABASE_URL`, `NEON_PROJECT_ID`, `OPENROUTER_API_KEY`).
 
 ## Environment variables (armed)
 
