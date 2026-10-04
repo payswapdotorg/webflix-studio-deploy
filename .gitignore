@@ -6,3 +6,5 @@ node_modules/
 .env.*
 tool-results/
 *.tsbuildinfo
+.vercel
+.env*

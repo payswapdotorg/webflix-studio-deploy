@@ -57,7 +57,7 @@ next.config.ts             rewrites + file tracing (function bundle scoped, publ
 
 ```bash
 bun install
-bun run prepare     # vendors + patches + transpiles + bakes (needs bun + the webflix-lab checkout)
+bun run vendor      # vendors + patches + transpiles + bakes (needs bun + the webflix-lab checkout)
 bun run dev         # http://localhost:4321
 ```
 

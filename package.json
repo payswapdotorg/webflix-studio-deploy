@@ -7,7 +7,7 @@
     "dev": "next dev -p 4321",
     "build": "next build",
     "start": "next start -p 4321",
-    "prepare": "bash scripts/prepare.sh",
+    "vendor": "bash scripts/prepare.sh",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
