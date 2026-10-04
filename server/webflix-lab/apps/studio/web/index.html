@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebFlix-Lab · Operator Studio</title>
+  <meta name="description" content="WebFlix-Lab research implementation: compile an Audio Overview through the real lab pipeline and play it. Not the Gemini Notebook product.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f1417'/%3E%3Cpath d='M12 9l12 7-12 7z' fill='%234db6ac'/%3E%3C/svg%3E">
+  <!-- Gateway routing: the console gateway routes to the studio port (4313)
+       ONLY on the XTransformPort query — every subresource reference carries
+       it (the studio server ignores unknown query parameters, so direct
+       localhost:4313 access works identically). -->
+  <link rel="stylesheet" href="styles.css?XTransformPort=4313">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">WFLX</span>
+        <div class="brand-copy">
+          <h1>Operator Studio</h1>
+          <p class="brand-sub">
+            WebFlix-Lab research implementation — Audio Overview compiled through the real lab
+            pipeline. <strong>Not the Gemini Notebook product.</strong>
+          </p>
+        </div>
+      </div>
+      <div id="provider-chip" class="provider-chip" aria-live="polite" title="Provider state (from /api/health)">
+        <span class="chip-label">provider</span>
+        <span id="provider-chip-text" class="chip-text">checking…</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- ============ 1 · Source + 2 · Compile ============ -->
+      <section class="panel panel-left" aria-labelledby="sources-heading">
+        <h2 id="sources-heading">1 · Source</h2>
+        <p class="panel-note">
+          Checked-in fixtures, ingested through the real chain:
+          <span class="mono">adapter → understanding → Director</span>.
+        </p>
+        <ul id="source-list" class="source-list" aria-label="Pipeline sources"></ul>
+        <p id="sources-empty" class="muted" hidden>No sources available.</p>
+
+        <h2 id="compile-heading">2 · Compile</h2>
+        <div class="controls">
+          <label class="control">
+            <span class="control-label">Mode</span>
+            <select id="mode-select" aria-describedby="mode-help"></select>
+            <span id="mode-help" class="control-help">Audio formats the Director already supports.</span>
+          </label>
+          <label class="control">
+            <span class="control-label">Duration</span>
+            <select id="duration-select"></select>
+            <span class="control-help">Target seconds (canonical default per mode).</span>
+          </label>
+          <button id="compile-button" class="btn btn-primary" type="button">
+            Compile Overview
+          </button>
+        </div>
+        <p id="compile-hint" class="compile-hint">
+          Offline deterministic provider · pure-TS mastering · in-memory artifacts only.
+        </p>
+      </section>
+
+      <!-- ============ 3 · Overview ============ -->
+      <section class="panel panel-right" aria-labelledby="overview-heading">
+        <h2 id="overview-heading">3 · Overview</h2>
+
+        <div id="overview-empty" class="state state-empty">
+          <div class="state-glyph" aria-hidden="true">◍</div>
+          <p class="state-title">No overview yet</p>
+          <p class="state-body">
+            Pick a source, choose a mode, and <strong>Compile Overview</strong>. The compile runs
+            the real pipeline end-to-end on this machine.
+          </p>
+        </div>
+
+        <div id="overview-loading" class="state state-loading" hidden>
+          <div class="spinner" role="status" aria-label="Compiling"></div>
+          <p class="state-title">Compiling through the real pipeline…</p>
+          <p class="state-body mono">adapter → understanding → Director → plan → audio compile</p>
+        </div>
+
+        <div id="overview-error" class="state state-error" hidden>
+          <div class="state-glyph" aria-hidden="true">✕</div>
+          <p class="state-title" id="error-title">Compile failed</p>
+          <p class="state-body" id="error-message"></p>
+          <p class="state-hint" id="error-hint">Fix the input and compile again.</p>
+        </div>
+
+        <div id="overview-ready" hidden>
+          <div class="card player-card">
+            <div class="player-main">
+              <button id="play-button" class="btn btn-play" type="button" aria-label="Play overview">
+                <span id="play-icon" aria-hidden="true">▶</span>
+              </button>
+              <div class="player-timeline">
+                <div
+                  id="progress-track"
+                  class="progress-track"
+                  role="slider"
+                  tabindex="0"
+                  aria-label="Seek position"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  aria-valuetext="0:00">
+                  <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <div class="player-times">
+                  <span id="time-current" class="mono">0:00</span>
+                  <span id="now-playing" class="now-playing" aria-live="polite"></span>
+                  <span id="time-total" class="mono">–:––</span>
+                </div>
+              </div>
+            </div>
+            <p id="player-error" class="player-error" hidden></p>
+            <p class="player-meta">
+              <span id="player-mode" class="tag"></span>
+              <span id="player-provider" class="tag tag-dim"></span>
+              <span id="player-evidence" class="tag tag-dim">REPRODUCED · lab evidence</span>
+            </p>
+          </div>
+
+          <div class="columns">
+            <div class="card transcript-card">
+              <h3>Transcript</h3>
+              <p class="card-note">Click a turn to seek; the current turn highlights during playback.<span id="transcript-ix-note" hidden> After joining a session, <strong>⌁ markers</strong> pick the intervention boundary and inserted response turns highlight.</span></p>
+              <ol id="transcript-list" class="transcript-list"></ol>
+            </div>
+            <div class="side-col">
+              <div class="card">
+                <h3>Metadata</h3>
+                <dl id="metadata-list" class="kv"></dl>
+              </div>
+              <div class="card">
+                <h3>Provenance</h3>
+                <dl id="provenance-list" class="kv"></dl>
+                <p class="card-note">The repo’s artifact.json conventions (GeneratedArtifact sidecar).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- ============ 4 · Interactive session (W2) ============ -->
+      <section id="ix-section" class="panel ix-panel" aria-labelledby="ix-heading" hidden>
+        <h2 id="ix-heading">4 · Interactive session</h2>
+
+        <!-- Entry: join (appears after a successful compile) -->
+        <div id="ix-entry" class="ix-entry" hidden>
+          <div class="ix-semantics">
+            <p class="ix-semantics-line">
+              <strong>each question re-forks the session from the baseline (lab semantics)</strong>
+            </p>
+            <p class="ix-semantics-sub">
+              Join an <span class="mono">InteractiveAudioSession</span> over the compiled overview above:
+              ask a typed listener question at a turn boundary, hear the source-grounded response
+              spliced in, and read the locality + grounding proofs. This is the lab’s
+              fork-and-compare surface — not a cumulative product chat, and not the Gemini Notebook product.
+            </p>
+          </div>
+          <button id="ix-join-button" class="btn btn-primary" type="button">Join Interactive Session</button>
+          <p class="ix-entry-note">
+            Typed listener questions only — voice capture is <strong>UNRESOLVED</strong> (text stand-in;
+            no microphone is faked). The session registry is in-memory on the server — a restart resets it.
+          </p>
+        </div>
+
+        <!-- Joining (loading) -->
+        <div id="ix-joining" class="state state-loading" hidden>
+          <div class="spinner" role="status" aria-label="Joining"></div>
+          <p class="state-title">Establishing the interactive session…</p>
+          <p class="state-body mono">InteractiveAudioSession over the stored baseline</p>
+        </div>
+
+        <!-- Joined surface -->
+        <div id="ix-joined" hidden>
+          <div class="ix-labels" aria-label="Session semantics (always visible)">
+            <p class="ix-label-line">
+              <span aria-hidden="true">⑂</span> <strong>each question re-forks the session from the baseline (lab semantics)</strong>
+            </p>
+            <p class="ix-label-line">
+              <span aria-hidden="true">⌨</span> <strong>typed listener question — voice capture UNRESOLVED (text stand-in)</strong>
+            </p>
+          </div>
+
+          <div class="columns ix-columns">
+            <div class="side-col">
+              <div class="card">
+                <h3>Session</h3>
+                <dl id="ix-session-kv" class="kv"></dl>
+              </div>
+
+              <div class="card ix-ask-card" id="ix-ask-card">
+                <h3>Ask</h3>
+                <p id="ix-boundary-status" class="ix-boundary-status" aria-live="polite"></p>
+                <label class="control" for="ix-ask-input">
+                  <span class="control-label">typed listener question — voice capture UNRESOLVED (text stand-in)</span>
+                  <input id="ix-ask-input" class="ix-input" type="text" autocomplete="off"
+                    placeholder="What should the hosts answer from the source?" />
+                  <span class="control-help">typed stand-in — voice capture UNRESOLVED; no microphone is faked</span>
+                </label>
+                <div class="ix-chips" id="ix-chips" aria-label="Scripted questions (EXP-L-03), one-click fill"></div>
+                <div class="ix-ask-actions">
+                  <button id="ix-ask-button" class="btn btn-primary" type="button">Ask at boundary</button>
+                </div>
+                <div id="ix-ask-loading" class="ix-ask-loading" hidden>
+                  <div class="spinner" role="status" aria-label="Compiling the response"></div>
+                  <p>Forking from the baseline and compiling the source-grounded response through the
+                    <span class="mono">same machinery</span>…</p>
+                </div>
+                <p id="ix-ask-error" class="ix-ask-error" hidden></p>
+                <button id="ix-rejoin-button" class="btn" type="button" hidden>Re-join session</button>
+              </div>
+
+              <div class="card" id="ix-no-boundaries" hidden>
+                <h3>Ask</h3>
+                <p class="card-note">
+                  This baseline has no interior turn boundaries (fewer than two turns) — there is
+                  nothing to ask yet. Recompile a multi-turn mode (deep-dive, critique, debate).
+                </p>
+              </div>
+            </div>
+
+            <div class="side-col">
+              <div id="ix-results" hidden>
+                <div class="card ix-masters-card">
+                  <h3>Masters — compare</h3>
+                  <div class="ix-master-toggle" role="group" aria-label="Which master the player loads">
+                    <button id="ix-master-session" class="btn ix-master-btn" type="button"
+                      aria-pressed="false">Session master</button>
+                    <button id="ix-master-baseline" class="btn ix-master-btn" type="button"
+                      aria-pressed="true">Baseline master</button>
+                  </div>
+                  <dl id="ix-master-kv" class="kv"></dl>
+                </div>
+
+                <div class="card">
+                  <h3>Grounding — retrieved claims (F1)</h3>
+                  <p id="ix-grounding-summary" class="ix-proof-summary"></p>
+                  <ul id="ix-grounding-claims" class="ix-claims"></ul>
+                  <dl id="ix-grounding-kv" class="kv"></dl>
+                </div>
+              </div>
+
+              <div class="card" id="ix-history-card">
+                <h3>Fork history</h3>
+                <p class="card-note">Every question re-forks from the baseline — nothing is cumulative.</p>
+                <ul id="ix-history-list" class="ix-history" aria-label="Interventions on this session"></ul>
+                <p id="ix-history-empty" class="muted" hidden>No interventions yet — ask the first question.</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="ix-results-wide" hidden>
+            <div class="card">
+              <h3>Locality proof — original turns across the boundary</h3>
+              <p id="ix-locality-summary" class="ix-proof-summary"></p>
+              <div class="ix-table-wrap">
+                <table class="ix-table" id="ix-locality-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Original turn</th>
+                      <th scope="col">Byte identity (WAV sha256)</th>
+                      <th scope="col">Baseline start</th>
+                      <th scope="col">Session start</th>
+                      <th scope="col">Shift</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ix-locality-body"></tbody>
+                </table>
+              </div>
+              <p id="ix-locality-invariant" class="ix-invariant"></p>
+            </div>
+
+            <div class="card">
+              <h3>Response provenance</h3>
+              <dl id="ix-provenance-kv" class="kv"></dl>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>
+        Evidence class: <strong>REPRODUCED</strong> — lab reconstruction, never product-parity
+        evidence (AGENTS.md). Speech is the offline deterministic placeholder provider.
+      </p>
+      <p>
+        Interactive sessions use the lab’s fork semantics (each question re-forks from the baseline)
+        and typed listener input — voice capture is <strong>UNRESOLVED</strong>; no microphone is
+        offered or faked on this surface. W3 verifies the full operator journey.
+      </p>
+    </footer>
+  </div>
+
+  <audio id="player" preload="auto"></audio>
+  <script type="module" src="app.js?XTransformPort=4313"></script>
+</body>
+</html>

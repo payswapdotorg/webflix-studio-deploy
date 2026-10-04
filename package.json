@@ -1,0 +1,26 @@
+{
+  "name": "webflix-studio-deploy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vercel deployment of the WebFlix-Lab Operator Studio — a thin Next.js adapter over the vendored frozen webflix-lab pipeline (see server/webflix-lab/COMPAT_PATCHES.md).",
+  "scripts": {
+    "dev": "next dev -p 4321",
+    "build": "next build",
+    "start": "next start -p 4321",
+    "prepare": "bash scripts/prepare.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^16.1.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "z-ai-web-dev-sdk": "^0.0.18",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.0"
+  }
+}

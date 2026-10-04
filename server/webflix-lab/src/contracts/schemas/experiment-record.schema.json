@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webflix-lab.dev/contracts/experiment-record.schema.json",
+  "type": "object",
+  "properties": {
+    "recordType": {
+      "type": "string",
+      "const": "ExperimentRecord"
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^2\\.\\d+\\.\\d+$",
+      "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Experiment id, e.g. \"EXP-A-01\"."
+    },
+    "timestampUtc": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "ISO-8601 UTC timestamp, e.g. \"2026-09-26T19:26:00Z\"."
+    },
+    "operator": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Operator identity, e.g. \"tl2\", \"w1\"."
+    },
+    "surface": {
+      "type": "string",
+      "enum": [
+        "audio",
+        "video",
+        "both"
+      ],
+      "description": "Experiment surface."
+    },
+    "evidenceKind": {
+      "type": "string",
+      "enum": [
+        "black-box-run",
+        "lab-reproduction",
+        "reference-import",
+        "integration-check"
+      ],
+      "description": "Evidence kind, per the docs/evidence registry convention."
+    },
+    "referenceNotebook": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "sourceFingerprint": {
+      "description": "contentSha256 of the source (or combined sources).",
+      "type": "string",
+      "maxLength": 200
+    },
+    "selectedSources": {
+      "readOnly": true,
+      "description": "Source identities selected for this run.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "format": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Requested overview format/mode."
+    },
+    "language": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "length": {
+      "description": "Requested length/duration.",
+      "type": "string",
+      "maxLength": 100
+    },
+    "visualStyle": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "customPrompt": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "otherConfig": {
+      "readOnly": true,
+      "description": "Additional configuration, string-valued.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "baselineArtifact": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "mutation": {
+      "description": "The single changed variable (one-variable rule).",
+      "type": "string",
+      "maxLength": 2000
+    },
+    "artifactUnderTest": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "artifactHash": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "observations": {
+      "readOnly": true,
+      "description": "Each observation SHOULD carry an evidence label: OBSERVED / DOCUMENTED / HYPOTHESIS / REPRODUCED / UNRESOLVED.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      }
+    },
+    "invariants": {
+      "readOnly": true,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      }
+    },
+    "differences": {
+      "readOnly": true,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      }
+    },
+    "hypothesis": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "Confidence in the hypothesis."
+    },
+    "falsifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "description": "What result would prove the hypothesis wrong."
+    },
+    "nextExperiment": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "supported",
+        "weakened",
+        "falsified",
+        "unresolved",
+        "documented",
+        "reproduced",
+        "unresolved-pending-operator"
+      ],
+      "description": "Hypothesis status; never silently promote HYPOTHESIS to fact."
+    },
+    "evidencePaths": {
+      "readOnly": true,
+      "description": "Files that prove this record.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "recordType",
+    "contractVersion",
+    "id",
+    "timestampUtc",
+    "operator",
+    "surface",
+    "evidenceKind",
+    "selectedSources",
+    "format",
+    "otherConfig",
+    "observations",
+    "invariants",
+    "differences",
+    "hypothesis",
+    "confidence",
+    "falsifier",
+    "nextExperiment",
+    "status",
+    "evidencePaths"
+  ],
+  "additionalProperties": false,
+  "title": "ExperimentRecord"
+}

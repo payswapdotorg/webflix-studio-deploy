@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webflix-lab.dev/contracts/video-scene.schema.json",
+  "type": "object",
+  "properties": {
+    "recordType": {
+      "type": "string",
+      "const": "VideoScene"
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^2\\.\\d+\\.\\d+$",
+      "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+    },
+    "index": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "Zero-based position in the scene sequence."
+    },
+    "beatId": {
+      "description": "Narrative beat this scene belongs to.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "narrativePurpose": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "What this scene must explain; decoration alone is insufficient."
+    },
+    "visualType": {
+      "type": "string",
+      "enum": [
+        "title-card",
+        "architecture-diagram",
+        "state-diagram",
+        "process-flow",
+        "data-chart",
+        "code-panel",
+        "quote-panel",
+        "callout",
+        "hero-illustration",
+        "metaphor-illustration",
+        "workstation-scene",
+        "montage",
+        "table"
+      ],
+      "description": "Visual type of the scene, per the reference scene atlas."
+    },
+    "renderingClass": {
+      "type": "string",
+      "enum": [
+        "deterministic",
+        "generative",
+        "hybrid"
+      ],
+      "description": "Deterministic (exact labels/diagrams from structured facts), generative (illustration/metaphor) or hybrid, per the scene atlas reconstruction rules."
+    },
+    "exactTexts": {
+      "readOnly": true,
+      "description": "Exact text elements for the frame. Deterministic and hybrid scenes need at least one exact item (deep-validated per scene atlas rule 2).",
+      "type": "array",
+      "items": {
+        "description": "One exact text element that must appear in the frame.",
+        "$ref": "#/$defs/SceneTextItem"
+      }
+    },
+    "claimIds": {
+      "readOnly": true,
+      "description": "Grounded claims this scene visualizes.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+      }
+    },
+    "narrationRef": {
+      "description": "Reference to the narration segment covering this scene: an AudioTurn id in the same plan when audioTurns exist, otherwise a Worker-3 narration segment id.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "narrationBrief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Plan-level narration direction for this scene."
+    },
+    "targetDurationSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Planned duration of this scene in seconds."
+    },
+    "motion": {
+      "type": "string",
+      "enum": [
+        "static",
+        "pan",
+        "zoom",
+        "parallax",
+        "animated-diagram"
+      ],
+      "description": "Camera/motion intent; motion should emphasize transitions or relationships."
+    },
+    "transition": {
+      "type": "string",
+      "enum": [
+        "cut",
+        "crossfade",
+        "wipe",
+        "push",
+        "morph"
+      ],
+      "description": "Transition into this scene."
+    },
+    "styleBibleId": {
+      "description": "StyleBible reference (Worker 3 namespace).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "visualBrief": {
+      "description": "Editorial visual brief for generative components; provider-neutral.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    }
+  },
+  "required": [
+    "recordType",
+    "contractVersion",
+    "id",
+    "index",
+    "narrativePurpose",
+    "visualType",
+    "renderingClass",
+    "exactTexts",
+    "claimIds",
+    "narrationBrief",
+    "targetDurationSeconds",
+    "motion",
+    "transition"
+  ],
+  "additionalProperties": false,
+  "title": "VideoScene",
+  "$defs": {
+    "SceneTextItem": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "title",
+            "label",
+            "number",
+            "quote",
+            "caption",
+            "code"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "The exact text value."
+        },
+        "exact": {
+          "type": "boolean",
+          "description": "true = must be rendered exactly (deterministic); false = may be stylized."
+        }
+      },
+      "required": [
+        "role",
+        "value",
+        "exact"
+      ],
+      "additionalProperties": false,
+      "title": "SceneTextItem"
+    }
+  }
+}

@@ -1,0 +1,834 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webflix-lab.dev/contracts/overview-plan.schema.json",
+  "type": "object",
+  "properties": {
+    "recordType": {
+      "type": "string",
+      "const": "OverviewPlan"
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^2\\.\\d+\\.\\d+$",
+      "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+    },
+    "sourceIds": {
+      "readOnly": true,
+      "description": "SourceArtifacts the plan is grounded in.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+      }
+    },
+    "modality": {
+      "type": "string",
+      "enum": [
+        "audio",
+        "video"
+      ],
+      "description": "Output modality of the planned overview."
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "deep-dive",
+        "brief",
+        "critique",
+        "debate",
+        "explainer",
+        "short",
+        "cinematic"
+      ],
+      "description": "Overview format. Must correlate with modality: audio plans use audio formats, video plans use video formats (enforced by the TypeScript runtime validator; JSON Schema consumers must enforce this application-side)."
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "One-line editorial objective of the overview."
+    },
+    "audience": {
+      "type": "string",
+      "enum": [
+        "general",
+        "technical",
+        "executive",
+        "domain-expert"
+      ],
+      "description": "Target audience level."
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
+      "description": "BCP-47 language tag, e.g. \"en\" or \"pt-BR\"."
+    },
+    "targetDurationSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Target total duration in seconds."
+    },
+    "style": {
+      "description": "Provider-neutral style directions for the plan.",
+      "$ref": "#/$defs/PlanStyle"
+    },
+    "customInstructions": {
+      "description": "User-supplied custom instructions, if any.",
+      "type": "string",
+      "maxLength": 4000
+    },
+    "coverage": {
+      "description": "Editorial accounting of every graph claim: covered or omitted with a reason (completeness is deep-validated against the SemanticGraph).",
+      "$ref": "#/$defs/CoverageMap"
+    },
+    "beats": {
+      "readOnly": true,
+      "description": "Ordered narrative beats; the editorial spine of the overview.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "description": "One narrative beat of the plan.",
+        "$ref": "#/$defs/NarrativeBeat"
+      }
+    },
+    "audioTurns": {
+      "readOnly": true,
+      "description": "Plan-level audio turns; required and non-empty for audio plans.",
+      "type": "array",
+      "items": {
+        "description": "One planned audio dialogue turn. Plan level: brief + evidence + target duration. Script level (Worker 2): adds final text.",
+        "$ref": "#/$defs/AudioTurn"
+      }
+    },
+    "videoScenes": {
+      "readOnly": true,
+      "description": "Plan-level video scenes; required and non-empty for video plans.",
+      "type": "array",
+      "items": {
+        "description": "One planned video scene with narrative purpose, visual type, exact texts, and deterministic-vs-generative classification per the reference scene atlas.",
+        "$ref": "#/$defs/VideoScene"
+      }
+    },
+    "generator": {
+      "description": "Reproducibility metadata for the plan.",
+      "$ref": "#/$defs/PlanGeneratorInfo"
+    },
+    "createdAt": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "ISO-8601 UTC timestamp, e.g. \"2026-09-26T19:26:00Z\"."
+    },
+    "notes": {
+      "description": "Free-form plan notes.",
+      "type": "string",
+      "maxLength": 4000
+    }
+  },
+  "required": [
+    "recordType",
+    "contractVersion",
+    "id",
+    "sourceIds",
+    "modality",
+    "mode",
+    "objective",
+    "audience",
+    "language",
+    "targetDurationSeconds",
+    "style",
+    "coverage",
+    "beats",
+    "audioTurns",
+    "videoScenes",
+    "generator",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "title": "OverviewPlan",
+  "$defs": {
+    "PlanStyle": {
+      "type": "object",
+      "properties": {
+        "tone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Tone direction, e.g. \"curious, expert, conversational\"."
+        },
+        "register": {
+          "description": "Register, e.g. \"plain-technical\".",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "pacing": {
+          "description": "Pacing direction.",
+          "type": "string",
+          "enum": [
+            "measured",
+            "brisk",
+            "dynamic"
+          ]
+        },
+        "speakerCount": {
+          "description": "Speaker count for audio plans.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "styleBibleId": {
+          "description": "StyleBible reference for video plans (Worker 3 namespace).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        }
+      },
+      "required": [
+        "tone"
+      ],
+      "additionalProperties": false,
+      "title": "PlanStyle"
+    },
+    "CoverageEntry": {
+      "type": "object",
+      "properties": {
+        "claimId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "supporting",
+            "mention"
+          ],
+          "description": "Editorial role of the claim in this plan."
+        },
+        "unitIds": {
+          "readOnly": true,
+          "description": "Narrative units covering the claim (beat, turn or scene ids).",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        }
+      },
+      "required": [
+        "claimId",
+        "role",
+        "unitIds"
+      ],
+      "additionalProperties": false,
+      "title": "CoverageEntry"
+    },
+    "OmittedClaim": {
+      "type": "object",
+      "properties": {
+        "claimId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Editorial reason for omission, e.g. \"below salience threshold at 300 s\"."
+        }
+      },
+      "required": [
+        "claimId",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "title": "OmittedClaim"
+    },
+    "CoverageMap": {
+      "type": "object",
+      "properties": {
+        "covered": {
+          "readOnly": true,
+          "type": "array",
+          "items": {
+            "description": "One covered claim and where it is covered.",
+            "$ref": "#/$defs/CoverageEntry"
+          }
+        },
+        "omitted": {
+          "readOnly": true,
+          "type": "array",
+          "items": {
+            "description": "One deliberately omitted claim and why.",
+            "$ref": "#/$defs/OmittedClaim"
+          }
+        }
+      },
+      "required": [
+        "covered",
+        "omitted"
+      ],
+      "additionalProperties": false,
+      "title": "CoverageMap"
+    },
+    "NarrativeBeat": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Zero-based narrative order."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Short beat title."
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Editorial purpose of the beat."
+        },
+        "brief": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000,
+          "description": "Narrative brief: what the beat communicates and how it flows."
+        },
+        "claimIds": {
+          "readOnly": true,
+          "description": "Grounded claims in this beat.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "topicIds": {
+          "readOnly": true,
+          "description": "Topics touched by this beat.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "weight": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "Share of total duration in (0, 1]; beat weights must sum to 1 (deep-validated)."
+        }
+      },
+      "required": [
+        "id",
+        "index",
+        "title",
+        "purpose",
+        "brief",
+        "claimIds",
+        "topicIds",
+        "weight"
+      ],
+      "additionalProperties": false,
+      "title": "NarrativeBeat"
+    },
+    "EvidenceSpan": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Id of the SourceArtifact this span indexes into."
+        },
+        "blockId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Id of the SourceBlock containing the span."
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Inclusive start offset in UTF-16 code units into the source text."
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Exclusive end offset in UTF-16 code units."
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact quoted substring; must equal source.text.slice(start, end)."
+        }
+      },
+      "required": [
+        "sourceId",
+        "blockId",
+        "start",
+        "end",
+        "quote"
+      ],
+      "additionalProperties": false,
+      "title": "EvidenceSpan"
+    },
+    "TurnStyle": {
+      "type": "object",
+      "properties": {
+        "delivery": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Delivery direction for the speaker, e.g. \"curious question\"."
+        },
+        "emphasis": {
+          "description": "Optional emphasis note, e.g. \"land the number precisely\".",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        }
+      },
+      "required": [
+        "delivery"
+      ],
+      "additionalProperties": false,
+      "title": "TurnStyle"
+    },
+    "AudioTurn": {
+      "type": "object",
+      "properties": {
+        "recordType": {
+          "type": "string",
+          "const": "AudioTurn"
+        },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^2\\.\\d+\\.\\d+$",
+          "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Zero-based position in the turn sequence."
+        },
+        "speaker": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Display name, e.g. \"Host A\"."
+        },
+        "speakerRole": {
+          "type": "string",
+          "enum": [
+            "host-a",
+            "host-b",
+            "guest",
+            "narrator"
+          ],
+          "description": "Dialogue role of the speaker."
+        },
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "framing",
+            "question",
+            "explanation",
+            "example",
+            "connection",
+            "clarification",
+            "interjection",
+            "transition",
+            "synthesis",
+            "conclusion"
+          ],
+          "description": "Editorial purpose of the turn in the dialogue graph."
+        },
+        "brief": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Plan-level directive: what this turn must accomplish and stay grounded on."
+        },
+        "text": {
+          "description": "Final narration script; filled by the audio compiler, absent at plan level.",
+          "type": "string",
+          "maxLength": 8000
+        },
+        "claimIds": {
+          "readOnly": true,
+          "description": "Grounded claims this turn draws on.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "evidence": {
+          "readOnly": true,
+          "description": "Primary evidence backing this turn (usually the top span per claim).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Id of the SourceArtifact this span indexes into."
+              },
+              "blockId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Id of the SourceBlock containing the span."
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Inclusive start offset in UTF-16 code units into the source text."
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Exclusive end offset in UTF-16 code units."
+              },
+              "quote": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Exact quoted substring; must equal source.text.slice(start, end)."
+              }
+            },
+            "required": [
+              "sourceId",
+              "blockId",
+              "start",
+              "end",
+              "quote"
+            ],
+            "additionalProperties": false,
+            "title": "EvidenceSpan",
+            "description": "An exact evidence quote plus offsets into the source text.",
+            "$ref": "#/$defs/EvidenceSpan"
+          }
+        },
+        "beatId": {
+          "description": "Narrative beat this turn belongs to.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "style": {
+          "description": "Provider-neutral delivery style for one turn.",
+          "$ref": "#/$defs/TurnStyle"
+        },
+        "targetDurationSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Planned duration of this turn in seconds."
+        }
+      },
+      "required": [
+        "recordType",
+        "contractVersion",
+        "id",
+        "index",
+        "speaker",
+        "speakerRole",
+        "purpose",
+        "brief",
+        "claimIds",
+        "evidence",
+        "style",
+        "targetDurationSeconds"
+      ],
+      "additionalProperties": false,
+      "title": "AudioTurn"
+    },
+    "SceneTextItem": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "title",
+            "label",
+            "number",
+            "quote",
+            "caption",
+            "code"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "The exact text value."
+        },
+        "exact": {
+          "type": "boolean",
+          "description": "true = must be rendered exactly (deterministic); false = may be stylized."
+        }
+      },
+      "required": [
+        "role",
+        "value",
+        "exact"
+      ],
+      "additionalProperties": false,
+      "title": "SceneTextItem"
+    },
+    "VideoScene": {
+      "type": "object",
+      "properties": {
+        "recordType": {
+          "type": "string",
+          "const": "VideoScene"
+        },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^2\\.\\d+\\.\\d+$",
+          "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Zero-based position in the scene sequence."
+        },
+        "beatId": {
+          "description": "Narrative beat this scene belongs to.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "narrativePurpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "What this scene must explain; decoration alone is insufficient."
+        },
+        "visualType": {
+          "type": "string",
+          "enum": [
+            "title-card",
+            "architecture-diagram",
+            "state-diagram",
+            "process-flow",
+            "data-chart",
+            "code-panel",
+            "quote-panel",
+            "callout",
+            "hero-illustration",
+            "metaphor-illustration",
+            "workstation-scene",
+            "montage",
+            "table"
+          ],
+          "description": "Visual type of the scene, per the reference scene atlas."
+        },
+        "renderingClass": {
+          "type": "string",
+          "enum": [
+            "deterministic",
+            "generative",
+            "hybrid"
+          ],
+          "description": "Deterministic (exact labels/diagrams from structured facts), generative (illustration/metaphor) or hybrid, per the scene atlas reconstruction rules."
+        },
+        "exactTexts": {
+          "readOnly": true,
+          "description": "Exact text elements for the frame. Deterministic and hybrid scenes need at least one exact item (deep-validated per scene atlas rule 2).",
+          "type": "array",
+          "items": {
+            "description": "One exact text element that must appear in the frame.",
+            "$ref": "#/$defs/SceneTextItem"
+          }
+        },
+        "claimIds": {
+          "readOnly": true,
+          "description": "Grounded claims this scene visualizes.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "narrationRef": {
+          "description": "Reference to the narration segment covering this scene: an AudioTurn id in the same plan when audioTurns exist, otherwise a Worker-3 narration segment id.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "narrationBrief": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Plan-level narration direction for this scene."
+        },
+        "targetDurationSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Planned duration of this scene in seconds."
+        },
+        "motion": {
+          "type": "string",
+          "enum": [
+            "static",
+            "pan",
+            "zoom",
+            "parallax",
+            "animated-diagram"
+          ],
+          "description": "Camera/motion intent; motion should emphasize transitions or relationships."
+        },
+        "transition": {
+          "type": "string",
+          "enum": [
+            "cut",
+            "crossfade",
+            "wipe",
+            "push",
+            "morph"
+          ],
+          "description": "Transition into this scene."
+        },
+        "styleBibleId": {
+          "description": "StyleBible reference (Worker 3 namespace).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "visualBrief": {
+          "description": "Editorial visual brief for generative components; provider-neutral.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "recordType",
+        "contractVersion",
+        "id",
+        "index",
+        "narrativePurpose",
+        "visualType",
+        "renderingClass",
+        "exactTexts",
+        "claimIds",
+        "narrationBrief",
+        "targetDurationSeconds",
+        "motion",
+        "transition"
+      ],
+      "additionalProperties": false,
+      "title": "VideoScene"
+    },
+    "PlanGeneratorInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Generator identity, e.g. \"OverviewDirector@0.1.0\"."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version, e.g. \"0.1.0\"."
+        },
+        "seed": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Deterministic seed; identical inputs plus seed must reproduce the plan."
+        },
+        "deterministic": {
+          "type": "boolean",
+          "description": "True when the generator is fully deterministic given the seed."
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "seed",
+        "deterministic"
+      ],
+      "additionalProperties": false,
+      "title": "PlanGeneratorInfo"
+    }
+  }
+}

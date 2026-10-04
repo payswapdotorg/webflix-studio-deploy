@@ -1,0 +1,846 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webflix-lab.dev/contracts/semantic-graph.schema.json",
+  "type": "object",
+  "properties": {
+    "recordType": {
+      "type": "string",
+      "const": "SemanticGraph"
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^2\\.\\d+\\.\\d+$",
+      "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+    },
+    "sourceIds": {
+      "readOnly": true,
+      "description": "SourceArtifacts this graph was extracted from.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+      }
+    },
+    "claims": {
+      "readOnly": true,
+      "type": "array",
+      "items": {
+        "description": "A single source-grounded claim with evidence spans. Referential integrity (entityIds/topicIds resolve inside the SemanticGraph) is enforced by the graph schema.",
+        "$ref": "#/$defs/ClaimRecord"
+      }
+    },
+    "entities": {
+      "readOnly": true,
+      "type": "array",
+      "items": {
+        "description": "A named entity with exact mention spans.",
+        "$ref": "#/$defs/EntityRecord"
+      }
+    },
+    "topics": {
+      "readOnly": true,
+      "type": "array",
+      "items": {
+        "description": "A thematic grouping of claims, entities and source blocks. Referential integrity is enforced by the SemanticGraph schema; blockRefs are deep-validated against sources.",
+        "$ref": "#/$defs/TopicRecord"
+      }
+    },
+    "relationships": {
+      "readOnly": true,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "recordType": {
+            "type": "string",
+            "const": "RelationshipRecord"
+          },
+          "contractVersion": {
+            "type": "string",
+            "pattern": "^2\\.\\d+\\.\\d+$",
+            "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "uses",
+              "part-of",
+              "depends-on",
+              "integrates-with",
+              "alternative-to",
+              "produces",
+              "manages",
+              "secures",
+              "monitors",
+              "contrasts-with",
+              "related-to",
+              "other"
+            ],
+            "description": "Directed relationship kind."
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Subject entity id."
+          },
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Object entity id."
+          },
+          "predicate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Human phrase for the directed predicate, e.g. \"alternative hosted form of\"."
+          },
+          "evidence": {
+            "readOnly": true,
+            "description": "Evidence spans supporting the relationship. Multi-span evidence means co-occurrence support (the spans jointly ground the relationship).",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "description": "Id of the SourceArtifact this span indexes into."
+                },
+                "blockId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "description": "Id of the SourceBlock containing the span."
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Inclusive start offset in UTF-16 code units into the source text."
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Exclusive end offset in UTF-16 code units."
+                },
+                "quote": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Exact quoted substring; must equal source.text.slice(start, end)."
+                }
+              },
+              "required": [
+                "sourceId",
+                "blockId",
+                "start",
+                "end",
+                "quote"
+              ],
+              "additionalProperties": false,
+              "title": "EvidenceSpan",
+              "description": "An exact evidence quote plus offsets into the source text.",
+              "$ref": "#/$defs/EvidenceSpan"
+            }
+          },
+          "claimIds": {
+            "readOnly": true,
+            "description": "Claims that assert this relationship.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+            }
+          }
+        },
+        "required": [
+          "recordType",
+          "contractVersion",
+          "id",
+          "kind",
+          "subjectId",
+          "objectId",
+          "predicate",
+          "evidence",
+          "claimIds"
+        ],
+        "additionalProperties": false,
+        "title": "RelationshipRecord",
+        "description": "A directed, evidence-grounded relationship between two entities.",
+        "$ref": "#/$defs/RelationshipRecord"
+      }
+    },
+    "extractor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Extractor identity, e.g. \"DeterministicExtractor@0.1.0\"."
+    },
+    "createdAt": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "ISO-8601 UTC timestamp, e.g. \"2026-09-26T19:26:00Z\"."
+    }
+  },
+  "required": [
+    "recordType",
+    "contractVersion",
+    "id",
+    "sourceIds",
+    "claims",
+    "entities",
+    "topics",
+    "relationships",
+    "extractor",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "title": "SemanticGraph",
+  "$defs": {
+    "EvidenceSpan": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Id of the SourceArtifact this span indexes into."
+        },
+        "blockId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Id of the SourceBlock containing the span."
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Inclusive start offset in UTF-16 code units into the source text."
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Exclusive end offset in UTF-16 code units."
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact quoted substring; must equal source.text.slice(start, end)."
+        }
+      },
+      "required": [
+        "sourceId",
+        "blockId",
+        "start",
+        "end",
+        "quote"
+      ],
+      "additionalProperties": false,
+      "title": "EvidenceSpan"
+    },
+    "ClaimRecord": {
+      "type": "object",
+      "properties": {
+        "recordType": {
+          "type": "string",
+          "const": "ClaimRecord"
+        },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^2\\.\\d+\\.\\d+$",
+          "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "One-sentence declarative statement of the claim, grounded in evidence."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "fact",
+            "capability",
+            "goal",
+            "definition",
+            "opinion",
+            "relation",
+            "process",
+            "quantity",
+            "constraint",
+            "other"
+          ],
+          "description": "Editorial kind of the claim."
+        },
+        "evidence": {
+          "readOnly": true,
+          "description": "Evidence spans supporting the statement; at least one is required.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Id of the SourceArtifact this span indexes into."
+              },
+              "blockId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Id of the SourceBlock containing the span."
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Inclusive start offset in UTF-16 code units into the source text."
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Exclusive end offset in UTF-16 code units."
+              },
+              "quote": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Exact quoted substring; must equal source.text.slice(start, end)."
+              }
+            },
+            "required": [
+              "sourceId",
+              "blockId",
+              "start",
+              "end",
+              "quote"
+            ],
+            "additionalProperties": false,
+            "title": "EvidenceSpan",
+            "description": "An exact evidence quote plus offsets into the source text.",
+            "$ref": "#/$defs/EvidenceSpan"
+          }
+        },
+        "entityIds": {
+          "readOnly": true,
+          "description": "Entities referenced by this claim.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "topicIds": {
+          "readOnly": true,
+          "description": "Topics this claim belongs to.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "salience": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Editorial salience in [0, 1]; used by the Director for ranking."
+        },
+        "negated": {
+          "description": "True when the statement asserts absence or negation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "recordType",
+        "contractVersion",
+        "id",
+        "statement",
+        "kind",
+        "evidence",
+        "entityIds",
+        "topicIds",
+        "salience"
+      ],
+      "additionalProperties": false,
+      "title": "ClaimRecord"
+    },
+    "EntityMention": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "blockId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Inclusive start offset in UTF-16 code units into the source text."
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Exclusive end offset in UTF-16 code units."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact surface form at this mention; must equal source.text.slice(start, end)."
+        }
+      },
+      "required": [
+        "sourceId",
+        "blockId",
+        "start",
+        "end",
+        "text"
+      ],
+      "additionalProperties": false,
+      "title": "EntityMention"
+    },
+    "EntityRecord": {
+      "type": "object",
+      "properties": {
+        "recordType": {
+          "type": "string",
+          "const": "EntityRecord"
+        },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^2\\.\\d+\\.\\d+$",
+          "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Canonical entity name."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "tool",
+            "model",
+            "service",
+            "technology",
+            "infrastructure",
+            "concept",
+            "workflow",
+            "process",
+            "project",
+            "organization",
+            "person",
+            "metric",
+            "other"
+          ],
+          "description": "Entity kind for visual-type and diagram decisions."
+        },
+        "aliases": {
+          "readOnly": true,
+          "description": "Alternate surface forms observed or known.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        },
+        "mentions": {
+          "readOnly": true,
+          "description": "Exact mentions in the sources; at least one is required.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+              },
+              "blockId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Inclusive start offset in UTF-16 code units into the source text."
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Exclusive end offset in UTF-16 code units."
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Exact surface form at this mention; must equal source.text.slice(start, end)."
+              }
+            },
+            "required": [
+              "sourceId",
+              "blockId",
+              "start",
+              "end",
+              "text"
+            ],
+            "additionalProperties": false,
+            "title": "EntityMention",
+            "description": "One exact surface occurrence of an entity.",
+            "$ref": "#/$defs/EntityMention"
+          }
+        },
+        "summary": {
+          "description": "One-line entity summary.",
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "recordType",
+        "contractVersion",
+        "id",
+        "name",
+        "kind",
+        "aliases",
+        "mentions"
+      ],
+      "additionalProperties": false,
+      "title": "EntityRecord"
+    },
+    "BlockRef": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "blockId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        }
+      },
+      "required": [
+        "sourceId",
+        "blockId"
+      ],
+      "additionalProperties": false,
+      "title": "BlockRef"
+    },
+    "TopicRecord": {
+      "type": "object",
+      "properties": {
+        "recordType": {
+          "type": "string",
+          "const": "TopicRecord"
+        },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^2\\.\\d+\\.\\d+$",
+          "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Human-readable topic title."
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "One-to-two-sentence topic summary."
+        },
+        "keywords": {
+          "readOnly": true,
+          "description": "Topic keywords.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "claimIds": {
+          "readOnly": true,
+          "description": "Claims belonging to this topic.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "entityIds": {
+          "readOnly": true,
+          "description": "Entities associated with this topic.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        },
+        "blockRefs": {
+          "readOnly": true,
+          "description": "Source blocks covered by this topic.",
+          "type": "array",
+          "items": {
+            "description": "Reference to a SourceBlock in a specific SourceArtifact.",
+            "$ref": "#/$defs/BlockRef"
+          }
+        },
+        "salience": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Editorial salience in [0, 1]; used by the Director for ranking."
+        }
+      },
+      "required": [
+        "recordType",
+        "contractVersion",
+        "id",
+        "title",
+        "summary",
+        "keywords",
+        "claimIds",
+        "entityIds",
+        "blockRefs",
+        "salience"
+      ],
+      "additionalProperties": false,
+      "title": "TopicRecord"
+    },
+    "RelationshipRecord": {
+      "type": "object",
+      "properties": {
+        "recordType": {
+          "type": "string",
+          "const": "RelationshipRecord"
+        },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^2\\.\\d+\\.\\d+$",
+          "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "uses",
+            "part-of",
+            "depends-on",
+            "integrates-with",
+            "alternative-to",
+            "produces",
+            "manages",
+            "secures",
+            "monitors",
+            "contrasts-with",
+            "related-to",
+            "other"
+          ],
+          "description": "Directed relationship kind."
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Subject entity id."
+        },
+        "objectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Object entity id."
+        },
+        "predicate": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Human phrase for the directed predicate, e.g. \"alternative hosted form of\"."
+        },
+        "evidence": {
+          "readOnly": true,
+          "description": "Evidence spans supporting the relationship. Multi-span evidence means co-occurrence support (the spans jointly ground the relationship).",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Id of the SourceArtifact this span indexes into."
+              },
+              "blockId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "description": "Id of the SourceBlock containing the span."
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Inclusive start offset in UTF-16 code units into the source text."
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Exclusive end offset in UTF-16 code units."
+              },
+              "quote": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Exact quoted substring; must equal source.text.slice(start, end)."
+              }
+            },
+            "required": [
+              "sourceId",
+              "blockId",
+              "start",
+              "end",
+              "quote"
+            ],
+            "additionalProperties": false,
+            "title": "EvidenceSpan",
+            "description": "An exact evidence quote plus offsets into the source text.",
+            "$ref": "#/$defs/EvidenceSpan"
+          }
+        },
+        "claimIds": {
+          "readOnly": true,
+          "description": "Claims that assert this relationship.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          }
+        }
+      },
+      "required": [
+        "recordType",
+        "contractVersion",
+        "id",
+        "kind",
+        "subjectId",
+        "objectId",
+        "predicate",
+        "evidence",
+        "claimIds"
+      ],
+      "additionalProperties": false,
+      "title": "RelationshipRecord"
+    }
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webflix-lab.dev/contracts/topic.schema.json",
+  "type": "object",
+  "properties": {
+    "recordType": {
+      "type": "string",
+      "const": "TopicRecord"
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^2\\.\\d+\\.\\d+$",
+      "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "description": "Human-readable topic title."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "One-to-two-sentence topic summary."
+    },
+    "keywords": {
+      "readOnly": true,
+      "description": "Topic keywords.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
+    },
+    "claimIds": {
+      "readOnly": true,
+      "description": "Claims belonging to this topic.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+      }
+    },
+    "entityIds": {
+      "readOnly": true,
+      "description": "Entities associated with this topic.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+      }
+    },
+    "blockRefs": {
+      "readOnly": true,
+      "description": "Source blocks covered by this topic.",
+      "type": "array",
+      "items": {
+        "description": "Reference to a SourceBlock in a specific SourceArtifact.",
+        "$ref": "#/$defs/BlockRef"
+      }
+    },
+    "salience": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Editorial salience in [0, 1]; used by the Director for ranking."
+    }
+  },
+  "required": [
+    "recordType",
+    "contractVersion",
+    "id",
+    "title",
+    "summary",
+    "keywords",
+    "claimIds",
+    "entityIds",
+    "blockRefs",
+    "salience"
+  ],
+  "additionalProperties": false,
+  "title": "TopicRecord",
+  "$defs": {
+    "BlockRef": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "blockId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        }
+      },
+      "required": [
+        "sourceId",
+        "blockId"
+      ],
+      "additionalProperties": false,
+      "title": "BlockRef"
+    }
+  }
+}

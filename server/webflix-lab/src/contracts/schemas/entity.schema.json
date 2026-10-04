@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webflix-lab.dev/contracts/entity.schema.json",
+  "type": "object",
+  "properties": {
+    "recordType": {
+      "type": "string",
+      "const": "EntityRecord"
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^2\\.\\d+\\.\\d+$",
+      "description": "Contract bundle version (major must match 2.x.x of the frozen contracts)."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "description": "Canonical entity name."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "tool",
+        "model",
+        "service",
+        "technology",
+        "infrastructure",
+        "concept",
+        "workflow",
+        "process",
+        "project",
+        "organization",
+        "person",
+        "metric",
+        "other"
+      ],
+      "description": "Entity kind for visual-type and diagram decisions."
+    },
+    "aliases": {
+      "readOnly": true,
+      "description": "Alternate surface forms observed or known.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    },
+    "mentions": {
+      "readOnly": true,
+      "description": "Exact mentions in the sources; at least one is required.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          },
+          "blockId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Inclusive start offset in UTF-16 code units into the source text."
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Exclusive end offset in UTF-16 code units."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exact surface form at this mention; must equal source.text.slice(start, end)."
+          }
+        },
+        "required": [
+          "sourceId",
+          "blockId",
+          "start",
+          "end",
+          "text"
+        ],
+        "additionalProperties": false,
+        "title": "EntityMention",
+        "description": "One exact surface occurrence of an entity.",
+        "$ref": "#/$defs/EntityMention"
+      }
+    },
+    "summary": {
+      "description": "One-line entity summary.",
+      "type": "string",
+      "maxLength": 2000
+    }
+  },
+  "required": [
+    "recordType",
+    "contractVersion",
+    "id",
+    "name",
+    "kind",
+    "aliases",
+    "mentions"
+  ],
+  "additionalProperties": false,
+  "title": "EntityRecord",
+  "$defs": {
+    "EntityMention": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "blockId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier, e.g. \"claim-tool-catalog-1\"."
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Inclusive start offset in UTF-16 code units into the source text."
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Exclusive end offset in UTF-16 code units."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact surface form at this mention; must equal source.text.slice(start, end)."
+        }
+      },
+      "required": [
+        "sourceId",
+        "blockId",
+        "start",
+        "end",
+        "text"
+      ],
+      "additionalProperties": false,
+      "title": "EntityMention"
+    }
+  }
+}

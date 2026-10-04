@@ -1,0 +1,50 @@
+{
+  "name": "webflix-lab",
+  "version": "0.1.0",
+  "description": "Research and reconstruction laboratory for source-to-multimedia synthesis inspired by Gemini Notebook / NotebookLM. Shared IR, source intelligence and Overview Director (Worker 1 foundation).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "bun test",
+    "contracts:emit": "bun run src/contracts/emit-schemas.ts",
+    "fixtures:gen": "bun run tests/contracts/genfixtures.ts",
+    "audio:benchmark": "bun run tests/audio/generate-benchmark.ts",
+    "exp:a": "bun run experiments/run-exp-a.ts",
+    "exp:x02": "bun run experiments/run-exp-x-02.ts",
+    "video:benchmark": "bun run tests/video/generate-benchmark.ts",
+    "manifest:build": "bun run tools/manifest/build-registry.ts",
+    "exp:integration": "bun run tools/experiments/runner.ts",
+    "exp:l01": "bun run experiments/run-exp-l-01.ts",
+    "exp:l02": "bun run experiments/run-exp-l-02.ts",
+    "exp:interactive": "bun run experiments/run-interactive-audio.ts",
+    "exp:erefresh": "bun run experiments/run-exp-e-refresh.ts",
+    "exp:vs01": "bun run experiments/run-exp-v-s-01.ts",
+    "exp:vcin01": "bun run experiments/run-exp-v-cin-01.ts",
+    "exp:vcinlive": "bun run experiments/run-exp-v-cin-live-01.ts",
+    "cmp:ingest": "bun run tools/comparison/ingest.ts",
+    "exp:cmpaudio": "bun run experiments/run-comparison-audio.ts",
+    "exp:cmpvideo": "bun run experiments/run-comparison-video.ts",
+    "studio": "bun run apps/studio/server.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "4.0.529",
+    "@remotion/renderer": "4.0.529",
+    "@types/bun": "^1.4.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "eslint": "^10.11.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.529",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.70.1",
+    "z-ai-web-dev-sdk": "^0.0.18"
+  }
+}
