@@ -13,8 +13,9 @@ transport-level compatibility patches (`server/webflix-lab/COMPAT_PATCHES.md`).
 
 ## Live
 
-Deployed on Vercel (team `payswaporg`): the production URL is recorded in the
-deployment section below once the first production deploy lands.
+Deployed on Vercel from this repository (git integration: push to `main` →
+production deploy). The production URL is recorded below after the first
+successful deploy.
 
 ## What you can do in the browser
 
